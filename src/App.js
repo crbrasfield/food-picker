@@ -7,42 +7,61 @@ import { getLocations } from './services';
 
 
 class App extends Component {
-  componentDidMount () {
+  state = {
+    coords: null
+  };
+
+  getMyLocation = () => {
     window.navigator.geolocation
     ? this.getLocationData()
     : this.locationNotAvailable()
   }
-
+  
+  getLocationData = (data) => {
+    !data
+      ? window.navigator.geolocation.getCurrentPosition(this.getLocationData)
+      : this.setState({ coords: data.coords })
+  }
+  
   locationNotAvailable = () => {
     alert('Location services not available.');
   }
 
-  getLocationData = (data) => {
-    !data
-    ? window.navigator.geolocation.getCurrentPosition(this.getLocationData)
-    : this.fetchFood(data);
+  fetchFood = (e) => {
+    e.preventDefault();
+    const { latitude, longitude } = this.state.coords;
+    getLocations(latitude, longitude, this.showLocations);
   }
 
-  fetchFood = (data) => {
-    console.log('fetching with:', data);
-    const lat = data.coords.latitude;
-    const long = data.coords.longitude;
-    getLocations(lat, long);
+  showLocations = (locations) => {
+    console.log(locations);
   }
+
+  hasLocation = () =>
+    this.state.coords !== null;
 
   render() {
     return (
       <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
-        </header>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
+        {
+          this.hasLocation()
+          ? this.foodForm()
+          : this.getLocationButton()
+        }
       </div>
     );
   }
+
+  getLocationButton = () =>
+    <button onClick={this.getMyLocation}>
+      Get my location
+    </button>
+
+  foodForm = () =>
+    <form onSubmit={this.fetchFood}>
+      Distance: <input name="distance"  />
+      <button>Find my food!</button>
+    </form>
 }
 
 export default App;
